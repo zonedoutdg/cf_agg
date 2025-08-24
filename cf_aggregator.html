@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,9 +25,6 @@
             --link-color: #1d4ed8; /* blue-700 */
             --tag-bg: #e5e7eb; /* gray-200 */
             --tag-text: #4b5563; /* gray-600 */
-            --ai-btn-bg: #dbeafe; /* blue-100 */
-            --ai-btn-text: #1d4ed8; /* blue-700 */
-            --ai-btn-hover-bg: #bfdbfe; /* blue-200 */
         }
 
         html.dark {
@@ -34,8 +32,8 @@
             --bg-secondary: #252526;
             --bg-tertiary: #333333;
             --bg-hover: #383838;
-            --text-primary: #f9fafb; /* Bold White (gray-50) */
-            --text-secondary: #d1d5db; /* Brighter secondary text (gray-300) */
+            --text-primary: #ffffff; /* Brighter White */
+            --text-secondary: #ffffff; /* White */
             --border-primary: #444444;
             --border-secondary: #555555;
             --problem-solved-bg: #2b472b;
@@ -43,9 +41,6 @@
             --link-color: #60a5fa; /* blue-400 */
             --tag-bg: #374151; /* gray-700 */
             --tag-text: #d1d5db; /* gray-300 */
-            --ai-btn-bg: #1e3a8a; /* blue-900 */
-            --ai-btn-text: #93c5fd; /* blue-300 */
-            --ai-btn-hover-bg: #1e40af; /* blue-800 */
         }
 
         body {
@@ -68,19 +63,15 @@
         .cf-table tr:hover { background-color: var(--bg-hover); }
         .problem-solved { background-color: var(--problem-solved-bg) !important; }
         .problem-attempted { background-color: var(--problem-attempted-bg) !important; }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
         
         .link-colored { color: var(--link-color); }
         .tag-colored { background-color: var(--tag-bg); color: var(--tag-text); }
-        .ai-btn-colored { background-color: var(--ai-btn-bg); color: var(--ai-btn-text); }
-        .ai-btn-colored:hover { background-color: var(--ai-btn-hover-bg); }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-white-800">
 
     <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         
-        <!-- Header -->
         <header class="bg-[var(--bg-secondary)] border-b-2 border-[var(--border-secondary)] p-4 rounded-t-lg flex justify-between items-center">
              <h1 class="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Codeforces Aggregator</h1>
              <button id="theme-toggle" class="p-2 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]">
@@ -89,11 +80,10 @@
              </button>
         </header>
 
-        <!-- Input Section -->
         <div class="bg-[var(--bg-secondary)] p-4 border-l border-r border-b border-[var(--border-primary)]">
             <label for="handles" class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Codeforces Handles</label>
             <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="handles" class="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" placeholder="e.g., tourist, Petr, Um_nik">
+                <input type="text" id="handles" class="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" placeholder="e.g., zonedout,tourist,jiangly">
                 <button id="fetch-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-5 rounded-md transition flex items-center justify-center">
                     <span id="btn-text">Aggregate</span>
                     <div id="loader" class="spinner w-5 h-5 rounded-full border-2 border-t-transparent border-white ml-2 hidden"></div>
@@ -102,15 +92,12 @@
             <p class="text-xs text-[var(--text-secondary)] mt-2">Enter one or more handles, separated by commas.</p>
         </div>
         
-        <!-- Error Message -->
         <div id="error-container" class="mt-4 text-center text-red-700 hidden p-4 bg-red-100 border border-red-300 rounded-lg">
             <p id="error-message"></p>
         </div>
 
-        <!-- Main Content Area -->
         <main id="results-container" class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6 hidden">
             
-            <!-- Left Sidebar -->
             <aside class="lg:col-span-1 space-y-6">
                 <div class="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
                     <h2 class="text-lg font-semibold text-[var(--text-primary)] p-4 border-b border-[var(--border-primary)]">Profiles</h2>
@@ -128,7 +115,6 @@
                 </div>
             </aside>
 
-            <!-- Right Content -->
             <div class="lg:col-span-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
                 <div class="border-b border-[var(--border-primary)]">
                     <nav class="flex space-x-1" id="tabs">
@@ -156,7 +142,7 @@
                     </div>
                     <div class="mt-4 overflow-x-auto">
                         <table class="cf-table">
-                            <thead><tr><th>#</th><th>Name</th><th>Rating</th><th>Tags</th><th>✨ AI Helper</th></tr></thead>
+                            <thead><tr><th>#</th><th>Name</th><th>Rating</th><th>Tags</th></tr></thead>
                             <tbody id="filtered-problems-list"></tbody>
                         </table>
                     </div>
@@ -177,26 +163,6 @@
         </main>
     </div>
 
-    <!-- AI Hint Modal -->
-    <div id="ai-modal" class="fixed inset-0 z-50 items-center justify-center hidden">
-        <div class="modal-backdrop fixed inset-0"></div>
-        <div class="bg-[var(--bg-secondary)] rounded-lg shadow-xl w-full max-w-2xl mx-auto relative m-4">
-            <div class="p-6 border-b border-[var(--border-primary)]">
-                <h3 class="text-xl font-semibold text-[var(--text-primary)]" id="ai-modal-title">✨ AI Problem Helper</h3>
-            </div>
-            <div class="p-6">
-                <div id="ai-modal-loader" class="text-center">
-                    <div class="spinner w-12 h-12 mx-auto border-4"></div>
-                    <p class="mt-4 text-[var(--text-secondary)]">Generating explanation and hint...</p>
-                </div>
-                <div id="ai-modal-content" class="hidden prose max-w-none"></div>
-            </div>
-            <div class="p-4 bg-[var(--bg-tertiary)] rounded-b-lg text-right">
-                <button id="ai-modal-close" class="px-4 py-2 bg-[var(--bg-hover)] text-[var(--text-primary)] rounded-md hover:opacity-80">Close</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // DOM Elements
         const fetchBtn = document.getElementById('fetch-btn'), handlesInput = document.getElementById('handles'), resultsContainer = document.getElementById('results-container'), errorContainer = document.getElementById('error-container'), errorMessage = document.getElementById('error-message'), loader = document.getElementById('loader'), btnText = document.getElementById('btn-text');
@@ -204,7 +170,6 @@
         const findProblemsBtn = document.getElementById('find-problems-btn'), ratingFilterInput = document.getElementById('rating-filter'), tagsFilterInput = document.getElementById('tags-filter'), hideSolvedCheckbox = document.getElementById('hide-solved-checkbox'), hideUnsolvedTagsCheckbox = document.getElementById('hide-unsolved-tags-checkbox'), filteredProblemsList = document.getElementById('filtered-problems-list'), problemSortFilter = document.getElementById('problem-sort-filter');
         const tabsContainer = document.getElementById('tabs');
         const tabContents = { problemset: document.getElementById('problemset-tab'), contests: document.getElementById('contests-tab') };
-        const aiModal = document.getElementById('ai-modal'), aiModalTitle = document.getElementById('ai-modal-title'), aiModalLoader = document.getElementById('ai-modal-loader'), aiModalContent = document.getElementById('ai-modal-content'), aiModalClose = document.getElementById('ai-modal-close');
         const ratingChartCanvas = document.getElementById('rating-chart');
         const themeToggle = document.getElementById('theme-toggle'), themeIconLight = document.getElementById('theme-icon-light'), themeIconDark = document.getElementById('theme-icon-dark');
 
@@ -220,15 +185,6 @@
         hideUnsolvedTagsCheckbox.addEventListener('change', displayFilteredProblems);
         problemSortFilter.addEventListener('change', displayFilteredProblems);
         tabsContainer.addEventListener('click', (e) => { if (e.target.matches('.tab-btn')) switchTab(e.target.dataset.tab); });
-        aiModalClose.addEventListener('click', () => aiModal.classList.add('hidden'));
-        aiModal.querySelector('.modal-backdrop').addEventListener('click', () => aiModal.classList.add('hidden'));
-        filteredProblemsList.addEventListener('click', (e) => {
-            if (e.target.closest('.ai-hint-btn')) {
-                const button = e.target.closest('.ai-hint-btn');
-                const { problemName, tags, rating } = button.dataset;
-                handleAIHintClick(problemName, tags, rating);
-            }
-        });
         themeToggle.addEventListener('click', toggleTheme);
 
         // Initialization
@@ -350,42 +306,20 @@
         }
 
         function displayFilteredProblems() {
-            if (allProblems.length === 0) { filteredProblemsList.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-[var(--text-secondary)]">Problemset not loaded or empty.</td></tr>`; return; }
+            if (allProblems.length === 0) { filteredProblemsList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-[var(--text-secondary)]">Problemset not loaded or empty.</td></tr>`; return; }
             const rating = parseInt(ratingFilterInput.value, 10), tags = tagsFilterInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean), hideSolved = hideSolvedCheckbox.checked, hideUnsolvedTags = hideUnsolvedTagsCheckbox.checked, sortOption = problemSortFilter.value;
             let filtered = allProblems.filter(p => { const id = `${p.contestId}-${p.index}`, status = submissionStatus.get(id); if (hideSolved && status === 'SOLVED') return false; const ratingMatch = !rating || p.rating === rating; const tagsMatch = tags.length === 0 || tags.every(tag => p.tags.includes(tag)); return ratingMatch && tagsMatch; });
             switch (sortOption) { case 'newest': filtered.sort((a, b) => b.contestId - a.contestId || b.index.localeCompare(a.index)); break; case 'most-solved': filtered.sort((a, b) => (b.solvedCount || 0) - (a.solvedCount || 0)); break; case 'least-solved': filtered.sort((a, b) => (a.solvedCount || 0) - (b.solvedCount || 0)); break; default: filtered.sort((a, b) => (a.rating || 0) - (b.rating || 0) || (b.solvedCount || 0) - (a.solvedCount || 0)); break; }
             filteredProblemsList.innerHTML = '';
-            if (filtered.length === 0) { filteredProblemsList.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-[var(--text-secondary)]">No problems match your criteria.</td></tr>`; return; }
+            if (filtered.length === 0) { filteredProblemsList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-[var(--text-secondary)]">No problems match your criteria.</td></tr>`; return; }
             filtered.slice(0, 200).forEach(p => {
                 const id = `${p.contestId}-${p.index}`, status = submissionStatus.get(id);
                 let rowClass = ''; if (status === 'SOLVED') rowClass = 'problem-solved'; else if (status === 'ATTEMPTED') rowClass = 'problem-attempted';
                 const showTags = !(hideUnsolvedTags && status !== 'SOLVED');
                 const tagsHtml = showTags ? p.tags.map(t => `<span class="text-xs tag-colored px-2 py-1 rounded-full">${t}</span>`).join(' ') : '<i>Hidden</i>';
                 const ratingHtml = `<span class="${getRatingTextColorClass(p.rating)} font-bold">${p.rating || 'N/A'}</span>`;
-                const aiButton = `<button class="ai-hint-btn ai-btn-colored px-2 py-1 rounded-md text-sm" data-problem-name="${p.name}" data-tags="${p.tags.join(',')}" data-rating="${p.rating || ''}">Explain</button>`;
-                filteredProblemsList.innerHTML += `<tr class="${rowClass}"><td><a href="https://codeforces.com/problemset/problem/${p.contestId}/${p.index}" target="_blank" class="link-colored hover:underline">${p.contestId}${p.index}</a></td><td class="font-semibold">${p.name}</td><td>${ratingHtml}</td><td class="flex flex-wrap gap-1">${tagsHtml}</td><td>${aiButton}</td></tr>`;
+                filteredProblemsList.innerHTML += `<tr class="${rowClass}"><td><a href="https://codeforces.com/problemset/problem/${p.contestId}/${p.index}" target="_blank" class="link-colored hover:underline">${p.contestId}${p.index}</a></td><td class="font-semibold">${p.name}</td><td>${ratingHtml}</td><td class="flex flex-wrap gap-1">${tagsHtml}</td></tr>`;
             });
-        }
-
-        async function handleAIHintClick(problemName, tags, rating) {
-            aiModal.style.display = 'flex'; aiModalContent.classList.add('hidden'); aiModalLoader.classList.remove('hidden'); aiModalTitle.textContent = `✨ AI Helper for "${problemName}"`;
-            try {
-                const prompt = `You are a helpful assistant for competitive programmers. A user wants help with a Codeforces problem. Problem Name: "${problemName}", Problem Tags: ${tags || 'None'}, Problem Rating: ${rating || 'Unknown'}. Your task is to provide two things: 1. A high-level, one-paragraph explanation of the general programming technique or concept needed to solve this type of problem. Do not refer to the specific problem details, but to the general approach (e.g., "Problems like this can often be solved with a greedy approach..."). 2. A single, subtle hint to get the user started. This should be a small nudge in the right direction, not a full step-by-step guide. IMPORTANT RULES: - DO NOT provide the full solution. - DO NOT write any code. - Keep the explanation and hint concise. - Format your response with markdown, using a heading for the explanation and a heading for the hint.`;
-                const aiResponse = await callGeminiAPI(prompt);
-                aiModalContent.innerHTML = aiResponse.replace(/\n/g, '<br>');
-                aiModalContent.classList.remove('hidden');
-            } catch (error) { console.error("Gemini API error:", error); aiModalContent.innerHTML = `<p class="text-red-500">Sorry, I couldn't fetch a hint right now. Please try again later.</p>`; aiModalContent.classList.remove('hidden'); } finally { aiModalLoader.classList.add('hidden'); }
-        }
-
-        async function callGeminiAPI(prompt, retries = 3, delay = 1000) {
-            const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-            try {
-                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (!response.ok) throw new Error(`API responded with status: ${response.status}`);
-                const result = await response.json();
-                if (result.candidates?.[0]?.content?.parts?.[0]) { return result.candidates[0].content.parts[0].text; } else { throw new Error("Invalid response structure from API."); }
-            } catch (error) { if (retries > 0) { await new Promise(res => setTimeout(res, delay)); return callGeminiAPI(prompt, retries - 1, delay * 2); } else { throw error; } }
         }
 
         function displayFilteredContests() {
