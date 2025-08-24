@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codeforces Account Aggregator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f1f1;
+            --bg-hover: #eff5ff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-primary: #e1e1e1;
+            --border-secondary: #dee2e6;
+            --problem-solved-bg: #d4edda;
+            --problem-attempted-bg: #f8d7da;
+            --link-color: #1d4ed8; /* blue-700 */
+            --tag-bg: #e5e7eb; /* gray-200 */
+            --tag-text: #4b5563; /* gray-600 */
+            --ai-btn-bg: #dbeafe; /* blue-100 */
+            --ai-btn-text: #1d4ed8; /* blue-700 */
+            --ai-btn-hover-bg: #bfdbfe; /* blue-200 */
+        }
+
+        html.dark {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #333333;
+            --bg-hover: #383838;
+            --text-primary: #f9fafb; /* Bold White (gray-50) */
+            --text-secondary: #d1d5db; /* Brighter secondary text (gray-300) */
+            --border-primary: #444444;
+            --border-secondary: #555555;
+            --problem-solved-bg: #2b472b;
+            --problem-attempted-bg: #5a2d2d;
+            --link-color: #60a5fa; /* blue-400 */
+            --tag-bg: #374151; /* gray-700 */
+            --tag-text: #d1d5db; /* gray-300 */
+            --ai-btn-bg: #1e3a8a; /* blue-900 */
+            --ai-btn-text: #93c5fd; /* blue-300 */
+            --ai-btn-hover-bg: #1e40af; /* blue-800 */
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .spinner {
+            border-top-color: #3B82F6;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .cf-table { border-collapse: collapse; width: 100%; }
+        .cf-table th, .cf-table td { border: 1px solid var(--border-primary); padding: 0.75rem; text-align: left; }
+        .cf-table th { background-color: var(--bg-tertiary); font-weight: 600; }
+        .cf-table tr:nth-child(even) { background-color: var(--bg-secondary); }
+        .cf-table tr:hover { background-color: var(--bg-hover); }
+        .problem-solved { background-color: var(--problem-solved-bg) !important; }
+        .problem-attempted { background-color: var(--problem-attempted-bg) !important; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
+        
+        .link-colored { color: var(--link-color); }
+        .tag-colored { background-color: var(--tag-bg); color: var(--tag-text); }
+        .ai-btn-colored { background-color: var(--ai-btn-bg); color: var(--ai-btn-text); }
+        .ai-btn-colored:hover { background-color: var(--ai-btn-hover-bg); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Header -->
+        <header class="bg-[var(--bg-secondary)] border-b-2 border-[var(--border-secondary)] p-4 rounded-t-lg flex justify-between items-center">
+             <h1 class="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">Codeforces Aggregator</h1>
+             <button id="theme-toggle" class="p-2 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+                <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+             </button>
+        </header>
+
+        <!-- Input Section -->
+        <div class="bg-[var(--bg-secondary)] p-4 border-l border-r border-b border-[var(--border-primary)]">
+            <label for="handles" class="block text-sm font-medium text-[var(--text-secondary)] mb-2">Codeforces Handles</label>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="handles" class="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" placeholder="e.g., tourist, Petr, Um_nik">
+                <button id="fetch-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-5 rounded-md transition flex items-center justify-center">
+                    <span id="btn-text">Aggregate</span>
+                    <div id="loader" class="spinner w-5 h-5 rounded-full border-2 border-t-transparent border-white ml-2 hidden"></div>
+                </button>
+            </div>
+            <p class="text-xs text-[var(--text-secondary)] mt-2">Enter one or more handles, separated by commas.</p>
+        </div>
+        
+        <!-- Error Message -->
+        <div id="error-container" class="mt-4 text-center text-red-700 hidden p-4 bg-red-100 border border-red-300 rounded-lg">
+            <p id="error-message"></p>
+        </div>
+
+        <!-- Main Content Area -->
+        <main id="results-container" class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6 hidden">
+            
+            <!-- Left Sidebar -->
+            <aside class="lg:col-span-1 space-y-6">
+                <div class="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
+                    <h2 class="text-lg font-semibold text-[var(--text-primary)] p-4 border-b border-[var(--border-primary)]">Profiles</h2>
+                    <div id="profiles" class="p-4 space-y-4"></div>
+                </div>
+                <div class="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
+                    <h2 class="text-lg font-semibold text-[var(--text-primary)] p-4 border-b border-[var(--border-primary)]">Combined Statistics</h2>
+                    <div id="stats" class="p-4 grid grid-cols-2 gap-4"></div>
+                </div>
+                <div class="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
+                    <h2 class="text-lg font-semibold text-[var(--text-primary)] p-4 border-b border-[var(--border-primary)]">Solved Rating Distribution</h2>
+                    <div class="p-4">
+                        <canvas id="rating-chart"></canvas>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Right Content -->
+            <div class="lg:col-span-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
+                <div class="border-b border-[var(--border-primary)]">
+                    <nav class="flex space-x-1" id="tabs">
+                        <button data-tab="problemset" class="tab-btn px-4 py-3 font-medium text-blue-600 border-b-2 border-blue-600">Problemset Finder</button>
+                        <button data-tab="contests" class="tab-btn px-4 py-3 font-medium text-gray-500 hover:text-gray-700">Contest Finder</button>
+                    </nav>
+                </div>
+                <div id="problemset-tab" class="tab-content p-4">
+                    <div class="bg-[var(--bg-tertiary)] p-4 rounded-lg border border-[var(--border-primary)]">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-center">
+                            <input type="number" id="rating-filter" placeholder="Rating" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-4 py-2" step="100">
+                            <input type="text" id="tags-filter" placeholder="Tags" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-4 py-2">
+                            <select id="problem-sort-filter" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-4 py-2">
+                                <option value="newest">Sort by Newest</option>
+                                <option value="default">Sort by Rating</option>
+                                <option value="most-solved">Sort by Most Solved</option>
+                                <option value="least-solved">Sort by Least Solved</option>
+                            </select>
+                            <button id="find-problems-btn" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-md">Filter</button>
+                        </div>
+                        <div class="mt-4 flex flex-col sm:flex-row sm:space-x-6">
+                            <label class="flex items-center space-x-2 text-[var(--text-secondary)] cursor-pointer"><input type="checkbox" id="hide-solved-checkbox" class="h-4 w-4 rounded"><span>Hide Solved</span></label>
+                            <label class="flex items-center space-x-2 text-[var(--text-secondary)] cursor-pointer mt-2 sm:mt-0"><input type="checkbox" id="hide-unsolved-tags-checkbox" class="h-4 w-4 rounded"><span>Hide Unsolved Tags</span></label>
+                        </div>
+                    </div>
+                    <div class="mt-4 overflow-x-auto">
+                        <table class="cf-table">
+                            <thead><tr><th>#</th><th>Name</th><th>Rating</th><th>Tags</th><th>✨ AI Helper</th></tr></thead>
+                            <tbody id="filtered-problems-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="contests-tab" class="tab-content p-4 hidden">
+                    <div class="flex flex-col sm:flex-row gap-3 items-center bg-[var(--bg-tertiary)] p-4 rounded-lg border border-[var(--border-primary)]">
+                        <select id="division-filter" class="w-full sm:w-auto bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-4 py-2">
+                            <option value="All">All Divisions</option><option value="Div. 1">Div. 1</option><option value="Div. 2">Div. 2</option><option value="Div. 3">Div. 3</option><option value="Div. 4">Div. 4</option>
+                        </select>
+                        <select id="participation-filter" class="w-full sm:w-auto bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-4 py-2">
+                            <option value="no-submissions">No Submissions</option><option value="has-submissions">Has Submissions</option><option value="no-solved">Has Submissions (No AC)</option><option value="has-solved">Has Solved (AC)</option><option value="any">Doesn't Matter</option>
+                        </select>
+                        <button id="find-contests-btn" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-md">Find</button>
+                    </div>
+                    <div id="filtered-contests-list" class="mt-4 space-y-2"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI Hint Modal -->
+    <div id="ai-modal" class="fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-backdrop fixed inset-0"></div>
+        <div class="bg-[var(--bg-secondary)] rounded-lg shadow-xl w-full max-w-2xl mx-auto relative m-4">
+            <div class="p-6 border-b border-[var(--border-primary)]">
+                <h3 class="text-xl font-semibold text-[var(--text-primary)]" id="ai-modal-title">✨ AI Problem Helper</h3>
+            </div>
+            <div class="p-6">
+                <div id="ai-modal-loader" class="text-center">
+                    <div class="spinner w-12 h-12 mx-auto border-4"></div>
+                    <p class="mt-4 text-[var(--text-secondary)]">Generating explanation and hint...</p>
+                </div>
+                <div id="ai-modal-content" class="hidden prose max-w-none"></div>
+            </div>
+            <div class="p-4 bg-[var(--bg-tertiary)] rounded-b-lg text-right">
+                <button id="ai-modal-close" class="px-4 py-2 bg-[var(--bg-hover)] text-[var(--text-primary)] rounded-md hover:opacity-80">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const fetchBtn = document.getElementById('fetch-btn'), handlesInput = document.getElementById('handles'), resultsContainer = document.getElementById('results-container'), errorContainer = document.getElementById('error-container'), errorMessage = document.getElementById('error-message'), loader = document.getElementById('loader'), btnText = document.getElementById('btn-text');
+        const findContestsBtn = document.getElementById('find-contests-btn'), divisionFilter = document.getElementById('division-filter'), participationFilter = document.getElementById('participation-filter'), filteredContestsList = document.getElementById('filtered-contests-list');
+        const findProblemsBtn = document.getElementById('find-problems-btn'), ratingFilterInput = document.getElementById('rating-filter'), tagsFilterInput = document.getElementById('tags-filter'), hideSolvedCheckbox = document.getElementById('hide-solved-checkbox'), hideUnsolvedTagsCheckbox = document.getElementById('hide-unsolved-tags-checkbox'), filteredProblemsList = document.getElementById('filtered-problems-list'), problemSortFilter = document.getElementById('problem-sort-filter');
+        const tabsContainer = document.getElementById('tabs');
+        const tabContents = { problemset: document.getElementById('problemset-tab'), contests: document.getElementById('contests-tab') };
+        const aiModal = document.getElementById('ai-modal'), aiModalTitle = document.getElementById('ai-modal-title'), aiModalLoader = document.getElementById('ai-modal-loader'), aiModalContent = document.getElementById('ai-modal-content'), aiModalClose = document.getElementById('ai-modal-close');
+        const ratingChartCanvas = document.getElementById('rating-chart');
+        const themeToggle = document.getElementById('theme-toggle'), themeIconLight = document.getElementById('theme-icon-light'), themeIconDark = document.getElementById('theme-icon-dark');
+
+        // Global state
+        let allContests = [], allProblems = [], submissionStatus = new Map(), contestTimeMap = new Map(), ratingChart = null, allSubmissions = [];
+
+        // Event Listeners
+        fetchBtn.addEventListener('click', fetchData);
+        handlesInput.addEventListener('keyup', (e) => { if (e.key === 'Enter') fetchData(); });
+        findContestsBtn.addEventListener('click', displayFilteredContests);
+        findProblemsBtn.addEventListener('click', displayFilteredProblems);
+        hideSolvedCheckbox.addEventListener('change', displayFilteredProblems);
+        hideUnsolvedTagsCheckbox.addEventListener('change', displayFilteredProblems);
+        problemSortFilter.addEventListener('change', displayFilteredProblems);
+        tabsContainer.addEventListener('click', (e) => { if (e.target.matches('.tab-btn')) switchTab(e.target.dataset.tab); });
+        aiModalClose.addEventListener('click', () => aiModal.classList.add('hidden'));
+        aiModal.querySelector('.modal-backdrop').addEventListener('click', () => aiModal.classList.add('hidden'));
+        filteredProblemsList.addEventListener('click', (e) => {
+            if (e.target.closest('.ai-hint-btn')) {
+                const button = e.target.closest('.ai-hint-btn');
+                const { problemName, tags, rating } = button.dataset;
+                handleAIHintClick(problemName, tags, rating);
+            }
+        });
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Initialization
+        initializeApp();
+        initializeTheme();
+
+        function initializeTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                themeIconLight.classList.add('hidden');
+                themeIconDark.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeIconLight.classList.remove('hidden');
+                themeIconDark.classList.add('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+            initializeTheme();
+            if (ratingChart) {
+                const solvedProblems = new Map();
+                allSubmissions.forEach(sub => { if (sub.verdict === 'OK') { const id = `${sub.problem.contestId}-${sub.problem.index}`; if (!solvedProblems.has(id)) { solvedProblems.set(id, sub.problem); } } });
+                renderRatingChart(solvedProblems);
+            }
+        }
+
+        async function initializeApp() { await Promise.all([fetchAllContests(), fetchAllProblems()]); }
+        async function fetchAllContests() { try { const res = await fetch('https://codeforces.com/api/contest.list'), data = await res.json(); if (data.status !== 'OK') throw new Error('API error'); allContests = data.result.filter(c => c.phase === 'FINISHED'); allContests.forEach(c => contestTimeMap.set(c.id, { start: c.startTimeSeconds, end: c.startTimeSeconds + c.durationSeconds })); } catch (e) { console.error(e); showError("Could not fetch master contest list."); } }
+        async function fetchAllProblems() { try { const res = await fetch('https://codeforces.com/api/problemset.problems'), data = await res.json(); if (data.status !== 'OK') throw new Error('API error'); const { problems, problemStatistics } = data.result, problemMap = new Map(); problems.forEach(p => problemMap.set(`${p.contestId}-${p.index}`, p)); problemStatistics.forEach(s => { const p = problemMap.get(`${s.contestId}-${s.index}`); if (p) p.solvedCount = s.solvedCount; }); allProblems = Array.from(problemMap.values()); } catch (e) { console.error(e); showError("Could not fetch master problemset."); } }
+        
+        async function fetchData() {
+            const handles = handlesInput.value.split(',').map(h => h.trim().toLowerCase()).filter(Boolean);
+            if (handles.length === 0) { showError('Please enter at least one handle.'); return; }
+            setLoading(true); hideError(); resultsContainer.classList.add('hidden');
+            const allUserData = [];
+            for (let i = 0; i < handles.length; i++) {
+                const handle = handles[i];
+                btnText.textContent = `Fetching ${handle} (${i + 1}/${handles.length})...`;
+                try {
+                    const userData = await fetchUser(handle);
+                    allUserData.push(userData);
+                    await new Promise(resolve => setTimeout(resolve, 500)); 
+                } catch (error) { showError(`Failed to fetch data for ${handle}. Reason: ${error.message}`); setLoading(false); return; }
+            }
+            try { processAndDisplayData(allUserData); resultsContainer.classList.remove('hidden'); displayFilteredProblems(); } catch (e) { console.error(e); showError("An error occurred while processing the data."); } finally { setLoading(false); }
+        }
+        
+        async function fetchUser(handle) {
+            try {
+                const [infoRes, statusRes, ratingRes] = await Promise.all([ fetch(`https://codeforces.com/api/user.info?handles=${handle}`), fetch(`https://codeforces.com/api/user.status?handle=${handle}`), fetch(`https://codeforces.com/api/user.rating?handle=${handle}`) ]);
+                if (!infoRes.ok) throw new Error(`User not found: ${handle}`); if (!statusRes.ok) throw new Error(`Status fetch failed for: ${handle}`); if (!ratingRes.ok) throw new Error(`Rating fetch failed for: ${handle}`);
+                const [infoData, statusData, ratingData] = await Promise.all([infoRes.json(), statusRes.json(), ratingRes.json()]);
+                if (infoData.status !== 'OK') throw new Error(`API Error for ${handle}: ${infoData.comment}`); if (statusData.status !== 'OK') throw new Error(`API Error for ${handle}: ${statusData.comment}`); if (ratingData.status !== 'OK') throw new Error(`API Error for ${handle}: ${ratingData.comment}`);
+                return { info: infoData.result[0], submissions: statusData.result, contests: ratingData.result };
+            } catch (e) { throw new Error(`Failed to fetch data for ${handle}. ${e.message}`); }
+        }
+        
+        function processAndDisplayData(allUserData) {
+            submissionStatus.clear();
+            let maxRating = 0, totalSubmissions = 0;
+            const profilesContainer = document.getElementById('profiles'), statsContainer = document.getElementById('stats');
+            profilesContainer.innerHTML = ''; statsContainer.innerHTML = '';
+            allSubmissions = allUserData.flatMap(ud => ud.submissions);
+            const allRatedContests = allUserData.flatMap(ud => ud.contests);
+            const liveContestIds = new Set();
+            allRatedContests.forEach(c => liveContestIds.add(c.contestId));
+            allSubmissions.forEach(sub => { const contestTimes = contestTimeMap.get(sub.contestId); if (contestTimes && sub.creationTimeSeconds >= contestTimes.start && sub.creationTimeSeconds <= contestTimes.end) { liveContestIds.add(sub.contestId); } });
+            const submittedContestIds = new Set(allSubmissions.map(s => s.contestId));
+            const solvedContestIds = new Set(allSubmissions.filter(s => s.verdict === 'OK').map(s => s.contestId));
+            window.submittedContestIds = submittedContestIds; window.solvedContestIds = solvedContestIds;
+            const solvedProblems = new Map();
+            allSubmissions.forEach(sub => { if (sub.verdict === 'OK') { const id = `${sub.problem.contestId}-${sub.problem.index}`; if (!solvedProblems.has(id)) { solvedProblems.set(id, sub.problem); } submissionStatus.set(id, 'SOLVED'); } });
+            allSubmissions.forEach(sub => { const id = `${sub.problem.contestId}-${sub.problem.index}`; if (!submissionStatus.has(id)) submissionStatus.set(id, 'ATTEMPTED'); });
+            allUserData.forEach(userData => { const profile = userData.info; maxRating = Math.max(maxRating, profile.maxRating || 0); totalSubmissions += userData.submissions.length; profilesContainer.innerHTML += `<div class="flex items-center gap-3"><img src="${profile.titlePhoto}" onerror="this.onerror=null;this.src='https://placehold.co/40x40/e2e8f0/4a5568?text=CF';" alt="${profile.handle}" class="w-10 h-10 rounded-full"><div class="text-sm"><a href="https://codeforces.com/profile/${profile.handle}" target="_blank" class="font-bold link-colored hover:underline">${profile.handle}</a><p class="text-[var(--text-secondary)]">Rating: ${profile.rating || 'N/A'}</p></div></div>`; });
+            statsContainer.innerHTML = `<div><p class="text-sm text-[var(--text-secondary)]">Total Solved</p><p class="text-xl font-bold text-green-600">${solvedProblems.size}</p></div><div><p class="text-sm text-[var(--text-secondary)]">Live Contests</p><p class="text-xl font-bold text-blue-600">${liveContestIds.size}</p></div><div><p class="text-sm text-[var(--text-secondary)]">Max Rating</p><p class="text-xl font-bold text-red-600">${maxRating}</p></div><div><p class="text-sm text-[var(--text-secondary)]">Submissions</p><p class="text-xl font-bold text-yellow-600">${totalSubmissions}</p></div>`;
+            renderRatingChart(solvedProblems);
+        }
+
+        function getRatingColor(rating) {
+            if (rating < 1200) return 'rgba(128, 128, 128, 0.7)'; if (rating < 1400) return 'rgba(0, 128, 0, 0.7)'; if (rating < 1600) return 'rgba(0, 255, 255, 0.7)'; if (rating < 1900) return 'rgba(0, 0, 255, 0.7)'; if (rating < 2100) return 'rgba(128, 0, 128, 0.7)'; if (rating < 2400) return 'rgba(255, 165, 0, 0.7)'; return 'rgba(255, 0, 0, 0.7)';
+        }
+
+        function getRatingTextColorClass(rating) {
+            if (!rating) return 'text-[var(--text-secondary)]';
+            if (rating < 1200) return 'text-gray-500';
+            if (rating < 1400) return 'text-green-600';
+            if (rating < 1600) return 'text-cyan-500 dark:text-cyan-400';
+            if (rating < 1900) return 'text-blue-600 dark:text-blue-400';
+            if (rating < 2100) return 'text-purple-600 dark:text-purple-400';
+            if (rating < 2400) return 'text-orange-500 dark:text-orange-400';
+            return 'text-red-600 dark:text-red-500';
+        }
+
+        function renderRatingChart(solvedProblems) {
+            const ratingCounts = {};
+            solvedProblems.forEach(problem => { if (problem.rating) { ratingCounts[problem.rating] = (ratingCounts[problem.rating] || 0) + 1; } });
+            const sortedRatings = Object.keys(ratingCounts).sort((a, b) => a - b);
+            const chartLabels = sortedRatings;
+            const chartData = sortedRatings.map(rating => ratingCounts[rating]);
+            const backgroundColors = sortedRatings.map(rating => getRatingColor(parseInt(rating)));
+            const borderColors = backgroundColors.map(color => color.replace('0.7', '1'));
+            if (ratingChart) { ratingChart.destroy(); }
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tickColor = isDark ? '#999' : '#666';
+
+            ratingChart = new Chart(ratingChartCanvas, {
+                type: 'bar',
+                data: { labels: chartLabels, datasets: [{ label: 'Solved Problems', data: chartData, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }] },
+                options: {
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: gridColor } }, x: { ticks: { color: tickColor }, grid: { color: gridColor } } },
+                    plugins: { legend: { display: false } },
+                    responsive: true, maintainAspectRatio: true
+                }
+            });
+        }
+
+        function displayFilteredProblems() {
+            if (allProblems.length === 0) { filteredProblemsList.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-[var(--text-secondary)]">Problemset not loaded or empty.</td></tr>`; return; }
+            const rating = parseInt(ratingFilterInput.value, 10), tags = tagsFilterInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean), hideSolved = hideSolvedCheckbox.checked, hideUnsolvedTags = hideUnsolvedTagsCheckbox.checked, sortOption = problemSortFilter.value;
+            let filtered = allProblems.filter(p => { const id = `${p.contestId}-${p.index}`, status = submissionStatus.get(id); if (hideSolved && status === 'SOLVED') return false; const ratingMatch = !rating || p.rating === rating; const tagsMatch = tags.length === 0 || tags.every(tag => p.tags.includes(tag)); return ratingMatch && tagsMatch; });
+            switch (sortOption) { case 'newest': filtered.sort((a, b) => b.contestId - a.contestId || b.index.localeCompare(a.index)); break; case 'most-solved': filtered.sort((a, b) => (b.solvedCount || 0) - (a.solvedCount || 0)); break; case 'least-solved': filtered.sort((a, b) => (a.solvedCount || 0) - (b.solvedCount || 0)); break; default: filtered.sort((a, b) => (a.rating || 0) - (b.rating || 0) || (b.solvedCount || 0) - (a.solvedCount || 0)); break; }
+            filteredProblemsList.innerHTML = '';
+            if (filtered.length === 0) { filteredProblemsList.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-[var(--text-secondary)]">No problems match your criteria.</td></tr>`; return; }
+            filtered.slice(0, 200).forEach(p => {
+                const id = `${p.contestId}-${p.index}`, status = submissionStatus.get(id);
+                let rowClass = ''; if (status === 'SOLVED') rowClass = 'problem-solved'; else if (status === 'ATTEMPTED') rowClass = 'problem-attempted';
+                const showTags = !(hideUnsolvedTags && status !== 'SOLVED');
+                const tagsHtml = showTags ? p.tags.map(t => `<span class="text-xs tag-colored px-2 py-1 rounded-full">${t}</span>`).join(' ') : '<i>Hidden</i>';
+                const ratingHtml = `<span class="${getRatingTextColorClass(p.rating)} font-bold">${p.rating || 'N/A'}</span>`;
+                const aiButton = `<button class="ai-hint-btn ai-btn-colored px-2 py-1 rounded-md text-sm" data-problem-name="${p.name}" data-tags="${p.tags.join(',')}" data-rating="${p.rating || ''}">Explain</button>`;
+                filteredProblemsList.innerHTML += `<tr class="${rowClass}"><td><a href="https://codeforces.com/problemset/problem/${p.contestId}/${p.index}" target="_blank" class="link-colored hover:underline">${p.contestId}${p.index}</a></td><td class="font-semibold">${p.name}</td><td>${ratingHtml}</td><td class="flex flex-wrap gap-1">${tagsHtml}</td><td>${aiButton}</td></tr>`;
+            });
+        }
+
+        async function handleAIHintClick(problemName, tags, rating) {
+            aiModal.style.display = 'flex'; aiModalContent.classList.add('hidden'); aiModalLoader.classList.remove('hidden'); aiModalTitle.textContent = `✨ AI Helper for "${problemName}"`;
+            try {
+                const prompt = `You are a helpful assistant for competitive programmers. A user wants help with a Codeforces problem. Problem Name: "${problemName}", Problem Tags: ${tags || 'None'}, Problem Rating: ${rating || 'Unknown'}. Your task is to provide two things: 1. A high-level, one-paragraph explanation of the general programming technique or concept needed to solve this type of problem. Do not refer to the specific problem details, but to the general approach (e.g., "Problems like this can often be solved with a greedy approach..."). 2. A single, subtle hint to get the user started. This should be a small nudge in the right direction, not a full step-by-step guide. IMPORTANT RULES: - DO NOT provide the full solution. - DO NOT write any code. - Keep the explanation and hint concise. - Format your response with markdown, using a heading for the explanation and a heading for the hint.`;
+                const aiResponse = await callGeminiAPI(prompt);
+                aiModalContent.innerHTML = aiResponse.replace(/\n/g, '<br>');
+                aiModalContent.classList.remove('hidden');
+            } catch (error) { console.error("Gemini API error:", error); aiModalContent.innerHTML = `<p class="text-red-500">Sorry, I couldn't fetch a hint right now. Please try again later.</p>`; aiModalContent.classList.remove('hidden'); } finally { aiModalLoader.classList.add('hidden'); }
+        }
+
+        async function callGeminiAPI(prompt, retries = 3, delay = 1000) {
+            const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            try {
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API responded with status: ${response.status}`);
+                const result = await response.json();
+                if (result.candidates?.[0]?.content?.parts?.[0]) { return result.candidates[0].content.parts[0].text; } else { throw new Error("Invalid response structure from API."); }
+            } catch (error) { if (retries > 0) { await new Promise(res => setTimeout(res, delay)); return callGeminiAPI(prompt, retries - 1, delay * 2); } else { throw error; } }
+        }
+
+        function displayFilteredContests() {
+            if (allContests.length === 0) { showError("Master contest list not available."); return; }
+            const division = divisionFilter.value, participation = participationFilter.value;
+            const filtered = allContests.filter(c => { const divisionMatch = (division === 'All') || c.name.includes(division); if (!divisionMatch) return false; const hasSubmissions = window.submittedContestIds.has(c.id), hasSolved = window.solvedContestIds.has(c.id); switch (participation) { case 'no-submissions': return !hasSubmissions; case 'has-submissions': return hasSubmissions; case 'no-solved': return hasSubmissions && !hasSolved; case 'has-solved': return hasSolved; case 'any': return true; default: return false; } });
+            filteredContestsList.innerHTML = '';
+            if (filtered.length === 0) { filteredContestsList.innerHTML = `<p class="text-center p-4 text-[var(--text-secondary)]">No contests found.</p>`; } else { filtered.sort((a, b) => b.startTimeSeconds - a.startTimeSeconds); filtered.forEach(c => { filteredContestsList.innerHTML += `<div class="flex justify-between items-center p-3 rounded-md hover:bg-[var(--bg-hover)] border border-[var(--border-primary)]"><a href="https://codeforces.com/contests/${c.id}" target="_blank" class="link-colored hover:underline">${c.name}</a><span class="text-sm text-[var(--text-secondary)]">${new Date(c.startTimeSeconds * 1000).toLocaleDateString()}</span></div>`; }); }
+            filteredContestsList.classList.remove('hidden');
+        }
+        
+        function switchTab(tabName) {
+            Object.values(tabContents).forEach(content => content.classList.add('hidden'));
+            tabContents[tabName].classList.remove('hidden');
+            tabsContainer.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-blue-600');
+                btn.classList.add('text-gray-500', 'hover:text-gray-700');
+            });
+            const activeBtn = tabsContainer.querySelector(`[data-tab="${tabName}"]`);
+            activeBtn.classList.add('text-blue-600', 'border-blue-600');
+            activeBtn.classList.remove('text-gray-500', 'hover:text-gray-700');
+        }
+
+        function setLoading(isLoading) { fetchBtn.disabled = isLoading; loader.classList.toggle('hidden', !isLoading); btnText.textContent = isLoading ? 'Fetching...' : 'Aggregate'; }
+        function showError(message) { errorMessage.textContent = message; errorContainer.classList.remove('hidden'); }
+        function hideError() { errorContainer.classList.add('hidden'); }
+    </script>
+</body>
+</html>
