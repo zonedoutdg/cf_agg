@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,12 +106,6 @@
                     <h2 class="text-lg font-semibold text-[var(--text-primary)] p-4 border-b border-[var(--border-primary)]">Combined Statistics</h2>
                     <div id="stats" class="p-4 grid grid-cols-2 gap-4"></div>
                 </div>
-                <div class="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
-                    <h2 class="text-lg font-semibold text-[var(--text-primary)] p-4 border-b border-[var(--border-primary)]">Solved Rating Distribution</h2>
-                    <div class="p-4">
-                        <canvas id="rating-chart"></canvas>
-                    </div>
-                </div>
             </aside>
 
             <div class="lg:col-span-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg shadow-sm">
@@ -120,8 +113,10 @@
                     <nav class="flex space-x-1" id="tabs">
                         <button data-tab="problemset" class="tab-btn px-4 py-3 font-medium text-blue-600 border-b-2 border-blue-600">Problemset Finder</button>
                         <button data-tab="contests" class="tab-btn px-4 py-3 font-medium text-gray-500 hover:text-gray-700">Contest Finder</button>
+                        <button data-tab="stats" class="tab-btn px-4 py-3 font-medium text-gray-500 hover:text-gray-700">Statistics</button>
                     </nav>
                 </div>
+
                 <div id="problemset-tab" class="tab-content p-4">
                     <div class="bg-[var(--bg-tertiary)] p-4 rounded-lg border border-[var(--border-primary)]">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-center">
@@ -147,6 +142,7 @@
                         </table>
                     </div>
                 </div>
+
                 <div id="contests-tab" class="tab-content p-4 hidden">
                     <div class="flex flex-col sm:flex-row gap-3 items-center bg-[var(--bg-tertiary)] p-4 rounded-lg border border-[var(--border-primary)]">
                         <select id="division-filter" class="w-full sm:w-auto bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-4 py-2">
@@ -159,6 +155,13 @@
                     </div>
                     <div id="filtered-contests-list" class="mt-4 space-y-2"></div>
                 </div>
+
+                <div id="stats-tab" class="tab-content p-4 hidden">
+                    <div class="h-[500px] w-full">
+                        <canvas id="rating-chart"></canvas>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -169,7 +172,11 @@
         const findContestsBtn = document.getElementById('find-contests-btn'), divisionFilter = document.getElementById('division-filter'), participationFilter = document.getElementById('participation-filter'), filteredContestsList = document.getElementById('filtered-contests-list');
         const findProblemsBtn = document.getElementById('find-problems-btn'), ratingFilterInput = document.getElementById('rating-filter'), tagsFilterInput = document.getElementById('tags-filter'), hideSolvedCheckbox = document.getElementById('hide-solved-checkbox'), hideUnsolvedTagsCheckbox = document.getElementById('hide-unsolved-tags-checkbox'), filteredProblemsList = document.getElementById('filtered-problems-list'), problemSortFilter = document.getElementById('problem-sort-filter');
         const tabsContainer = document.getElementById('tabs');
-        const tabContents = { problemset: document.getElementById('problemset-tab'), contests: document.getElementById('contests-tab') };
+        const tabContents = { 
+            problemset: document.getElementById('problemset-tab'), 
+            contests: document.getElementById('contests-tab'),
+            stats: document.getElementById('stats-tab') 
+        };
         const ratingChartCanvas = document.getElementById('rating-chart');
         const themeToggle = document.getElementById('theme-toggle'), themeIconLight = document.getElementById('theme-icon-light'), themeIconDark = document.getElementById('theme-icon-dark');
 
@@ -292,15 +299,49 @@
             if (ratingChart) { ratingChart.destroy(); }
             const isDark = document.documentElement.classList.contains('dark');
             const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-            const tickColor = isDark ? '#999' : '#666';
+            const tickColor = isDark ? '#ddd' : '#333';
 
             ratingChart = new Chart(ratingChartCanvas, {
                 type: 'bar',
                 data: { labels: chartLabels, datasets: [{ label: 'Solved Problems', data: chartData, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }] },
                 options: {
-                    scales: { y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: gridColor } }, x: { ticks: { color: tickColor }, grid: { color: gridColor } } },
-                    plugins: { legend: { display: false } },
-                    responsive: true, maintainAspectRatio: true
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, color: tickColor },
+                            grid: { color: gridColor },
+                            title: {
+                                display: true,
+                                text: 'Number of Solved Problems',
+                                color: tickColor,
+                                font: { size: 14 }
+                            }
+                        },
+                        x: {
+                            ticks: { color: tickColor },
+                            grid: { color: gridColor },
+                            title: {
+                                display: true,
+                                text: 'Problem Rating',
+                                color: tickColor,
+                                font: { size: 14 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Solved Problem Rating Distribution',
+                            font: { size: 18 },
+                            color: tickColor,
+                            padding: {
+                                bottom: 20
+                            }
+                        }
+                    }
                 }
             });
         }
